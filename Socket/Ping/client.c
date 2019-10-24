@@ -13,6 +13,11 @@ main (int argc, char const *argv[])
 	int s, len ;
 	char buffer[1024] = {0}; 
 	char * data ;
+
+	if (argc != 3) {
+		fprintf(stderr, "Wrong number of arguments\n") ;
+		exit(EXIT_FAILURE) ;
+	}
 	
 	sock_fd = socket(AF_INET, SOCK_STREAM, 0) ;
 	if (sock_fd <= 0) {
@@ -22,8 +27,8 @@ main (int argc, char const *argv[])
 
 	memset(&serv_addr, '0', sizeof(serv_addr)); 
 	serv_addr.sin_family = AF_INET; 
-	serv_addr.sin_port = htons(8080); 
-	if (inet_pton(AF_INET, "127.0.0.1", &serv_addr.sin_addr) <= 0) {
+	serv_addr.sin_port = htons(atoi(argv[2])); 
+	if (inet_pton(AF_INET, argv[1], &serv_addr.sin_addr) <= 0) {
 		perror("inet_pton failed : ") ; 
 		exit(EXIT_FAILURE) ;
 	} 

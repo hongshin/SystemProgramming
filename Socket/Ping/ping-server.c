@@ -56,6 +56,14 @@ main (int argc, char const *argv[])
 	int opt = 1; 
 	int addrlen = sizeof(address); 
 
+	
+	if (argc != 2) {
+		fprintf(stderr, "Wrong number of arguments") ;
+		exit(EXIT_FAILURE) ;
+	}
+
+
+
 	char buffer[1024] = {0}; 
 
 	listen_fd = socket(AF_INET /*IPv4*/, SOCK_STREAM /*TCP*/, 0 /*IP*/) ;
@@ -67,7 +75,7 @@ main (int argc, char const *argv[])
 	memset(&address, '0', sizeof(address)); 
 	address.sin_family = AF_INET; 
 	address.sin_addr.s_addr = INADDR_ANY /* the localhost*/ ; 
-	address.sin_port = htons(8080); 
+	address.sin_port = htons(atoi(argv[1])); 
 
 	if (bind(listen_fd, (struct sockaddr *)&address, sizeof(address)) < 0) {
 		perror("bind failed : "); 
