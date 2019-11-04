@@ -14,7 +14,20 @@ main (int argc, char const *argv[])
 	char buffer[1024] = {0}; 
 	char * data ;
 
-	if (argc != 3) {
+	char * cmdline ; // 'list' or 'get'
+	char * filename ;
+
+	if (argc == 4 && strcmp(argv[3], "list") == 0) {
+		cmdline = strdup("#list") ;
+	}
+	else if (argc == 5 && strcmp(argv[3], "get") == 0) {
+		cmdline = strdup(argv[4]) ;
+	}
+	else {
+		//argv[1]: IP
+		//argv[2]: port
+		//argv[3]: command = {list, get}
+		//argv[4]: filename
 		fprintf(stderr, "Wrong number of arguments\n") ;
 		exit(EXIT_FAILURE) ;
 	}
@@ -37,37 +50,42 @@ main (int argc, char const *argv[])
 		perror("connect failed : ") ;
 		exit(EXIT_FAILURE) ;
 	}
-
-	scanf("%s", buffer) ;
 	
-	data = buffer ;
-	len = strlen(buffer) ;
+	data = cmdline ;
+	len = strlen(cmdline) ;
 	s = 0 ;
 	while (len > 0 && (s = send(sock_fd, data, len, 0)) > 0) {
 		data += s ;
 		len -= s ;
 	}
-
 	shutdown(sock_fd, SHUT_WR) ;
 
-	char buf[1024] ;
-	data = 0x0 ;
-	len = 0 ;
-	while ( (s = recv(sock_fd, buf, 1023, 0)) > 0 ) {
-		buf[s] = 0x0 ;
-		if (data == 0x0) {
-			data = strdup(buf) ;
-			len = s ;
-		}
-		else {
-			data = realloc(data, len + s + 1) ;
-			strncpy(data + len, buf, s) ;
-			data[len + s] = 0x0 ;
-			len += s ;
-		}
+	if (strcmp(cmdline, "#list") == 0) {
+		char buf[1024] ;
+		//data = 0x0 ;
+		//len = 0 ;
+		while ( (s = recv(sock_fd, buf, 1023, 0)) > 0 ) {
+			buf[s] = 0x0 ;
+			printf("%s", buf) ;
+			/*
+			if (data == 0x0) {
+				data = strdup(buf) ;
+				len = s ;
+			}
+			else {
+				data = realloc(data, len + s + 1) ;
+				strncpy(data + len, buf, s) ;
+				data[len + s] = 0x0 ;
+				len += s ;
+			}*/
 
+		}
+		printf("\n") ;
 	}
-	printf(">%s\n", data); 
-
+	else /* get file */ {
+		// fopen(cmdline, "w") ;
+		// while (recv(...)) { fwrite(...) }
+		// fclose(...) ;
+	}
 } 
 
