@@ -1,18 +1,23 @@
 // Partly taken from https://www.geeksforgeeks.org/socket-programming-cc/
 
-#include <unistd.h> 
 #include <stdio.h> 
-#include <sys/socket.h> 
 #include <stdlib.h> 
-#include <netinet/in.h> 
+#include <unistd.h> 
+
 #include <string.h> 
 #include <pthread.h>
+#include <dirent.h>
+
+#include <sys/socket.h> 
+#include <sys/types.h>
+#include <netinet/in.h> 
 
 void *
 worker (void * arg)
 {
 	int conn ;
 	char buf[1024] ;
+
 	char * data = 0x0, * orig = 0x0 ;
 	int len = 0 ;
 	int s ;
@@ -32,19 +37,43 @@ worker (void * arg)
 			data[len + s] = 0x0 ;
 			len += s ;
 		}
-
 	}
 	printf(">%s\n", data) ;
-	
-	orig = data ;
-	while (len > 0 && (s = send(conn, data, len, 0)) > 0) {
-		data += s ;
-		len -= s ;
-	}
-	shutdown(conn, SHUT_WR) ;
-	if (orig != 0x0) 
-		free(orig) ;
 
+	if (strcmp(data, "#list") == 0) {
+		DIR * d ;
+		d = opendir(".") ;
+		if (d == 0x0) {
+			perror("fail") ;
+			exit(EXIT_FAILURE) ;
+		}
+
+		struct dirent * e ;
+		for (e = readdir(d) ; 
+			 e != 0x0 ; 
+			 e = readdir(d)) {
+			if (e->d_type == DT_REG) {
+				//printf("%s\n", e->d_name) ;
+				char * orig ;
+				data = malloc(sizeof(char) * (strlen(e->d_name) + 2)) ;
+				strcpy(data, e->d_name) ;
+				strcat(data, "\n") ;
+				len = strlen(data) ;
+				orig = data ;
+				printf("> %s", data) ;
+				while (len > 0 && (s = send(conn, data, len, 0)) > 0) {
+					data += s ;
+					len -= s ;
+				}
+				free(orig) ;
+			}
+		}
+	}
+	else /* get file */ {
+		//TODO
+	}
+
+	shutdown(conn, SHUT_WR) ;
 	return 0x0 ;
 }
 
