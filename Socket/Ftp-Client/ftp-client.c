@@ -6,7 +6,7 @@
 #include <string.h> 
 
 int 
-main (int argc, char const *argv[]) 
+main (int argc, char *argv[]) 
 { 
 	struct sockaddr_in serv_addr; 
 	int sock_fd ;
@@ -16,18 +16,23 @@ main (int argc, char const *argv[])
 
 	char * cmdline ; // 'list' or 'get'
 	char * filename ;
+	char * ipaddr ;
+	char * portnum ;
 
-	if (argc == 4 && strcmp(argv[3], "list") == 0) {
+	//argv[1]: IP:port
+	//argv[2]: command = {list, get}
+	//argv[3]: filename
+
+	ipaddr = strtok(argv[1], ":") ;
+	portnum = strtok(0x0, ":") ;
+
+	if (argc == 3 && strcmp(argv[2], "list") == 0) {
 		cmdline = strdup("#list") ;
 	}
-	else if (argc == 5 && strcmp(argv[3], "get") == 0) {
-		cmdline = strdup(argv[4]) ;
+	else if (argc == 4 && strcmp(argv[2], "get") == 0) {
+		cmdline = strdup(argv[3]) ;
 	}
 	else {
-		//argv[1]: IP
-		//argv[2]: port
-		//argv[3]: command = {list, get}
-		//argv[4]: filename
 		fprintf(stderr, "Wrong number of arguments\n") ;
 		exit(EXIT_FAILURE) ;
 	}
@@ -40,11 +45,13 @@ main (int argc, char const *argv[])
 
 	memset(&serv_addr, '0', sizeof(serv_addr)); 
 	serv_addr.sin_family = AF_INET; 
-	serv_addr.sin_port = htons(atoi(argv[2])); 
-	if (inet_pton(AF_INET, argv[1], &serv_addr.sin_addr) <= 0) {
+	serv_addr.sin_port = htons(atoi(portnum)); 
+	if (inet_pton(AF_INET, ipaddr, &serv_addr.sin_addr) <= 0) {
 		perror("inet_pton failed : ") ; 
 		exit(EXIT_FAILURE) ;
 	} 
+
+	printf("connecting %s:%s\n", ipaddr, portnum) ;
 
 	if (connect(sock_fd, (struct sockaddr *) &serv_addr, sizeof(serv_addr)) < 0) {
 		perror("connect failed : ") ;
@@ -83,9 +90,25 @@ main (int argc, char const *argv[])
 		printf("\n") ;
 	}
 	else /* get file */ {
-		// fopen(cmdline, "w") ;
-		// while (recv(...)) { fwrite(...) }
-		// fclose(...) ;
+		char buf[1024] ;
+		size_t n_recv, n_write ;
+
+		FILE * dst = fopen(cmdline, "w") ;
+
+		if (dst == 0x0) {
+			perror("fail to open the file.\n") ;
+			exit(EXIT_FAILURE) ;
+		}
+
+		while ( (n_recv = recv(sock_fd, buf, 1024, 0)) > 0 ) {
+			n_write = fwrite(buf, sizeof(char), n_recv, dst) ;
+			if (n_recv != n_write) {
+				perror("fail to write on the file. \n") ;
+				exit(EXIT_FAILURE) ;
+			}
+		}
+
+		fclose(dst) ;
 	}
 } 
 

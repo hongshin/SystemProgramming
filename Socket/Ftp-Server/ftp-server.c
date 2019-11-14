@@ -70,7 +70,25 @@ worker (void * arg)
 		}
 	}
 	else /* get file */ {
-		//TODO
+		char buf[1024] ;
+		size_t n_read  ;
+		FILE * src = fopen(data, "r") ;
+
+		if (src == 0x0) {
+			fprintf(stderr, "fail to open %s.\n", data) ;
+			shutdown(conn, SHUT_WR) ;
+			return 0x0 ;
+		}
+
+		while ((n_read = fread(buf, sizeof(char), 1024, src)) > 0) {
+			size_t len = n_read ;
+			char * data = buf ;
+			while (len > 0 && (s = send(conn, data, len, 0)) > 0) {
+				data += s ;
+				len -= s ;
+			}			
+		}
+		fclose(src) ;
 	}
 
 	shutdown(conn, SHUT_WR) ;

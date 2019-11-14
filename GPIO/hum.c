@@ -11,7 +11,6 @@ read_dht11 ()
 {
   int d[5] = {0, 0, 0, 0, 0} ;
   uint8_t i, j = 0 ;
-  uint8_t lastState = HIGH ;
   uint8_t counter = 0 ;
 
   pinMode(DHTPIN, OUTPUT) ;
@@ -21,6 +20,8 @@ read_dht11 ()
 	  //delayMicroseconds(40) ;
 
   digitalWrite(DHTPIN, HIGH) ;
+  uint8_t lastState = HIGH ;
+
   delayMicroseconds(20) ;
 
   pinMode(DHTPIN, INPUT) ;
